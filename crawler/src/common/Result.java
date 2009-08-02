@@ -2,25 +2,19 @@ package common;
 
 import java.io.Serializable;
 
-public class Result implements Serializable {
-
-	private static final long serialVersionUID = -8308933226435790140L;
-	private Status status;
-	private int[] followerIds;
+public abstract class Result implements Serializable {
+	private static final long serialVersionUID = 7489507413955150330L;
 	private int id;
-	
-	public Result(int id, Status status, int[] followerIds) {
-		this.id = id;
-		this.status = status;
-		this.followerIds = followerIds;
-	}
+	private Status status;
 	
 	public Result(int id, Status status) {
-		this(id, status, null);
+		this.id = id;
+		this.status = status;
 	}
+	
+	public abstract int[] toQueue();
 	
 	public Status getStatus() { return this.status; }
 	public int getId() { return this.id; }
-	public int[] getFollowerIds() { return this.followerIds; }
 	public boolean isSuccessful() { return this.status == Status.SUCCESS; }	
 }

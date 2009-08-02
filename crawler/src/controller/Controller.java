@@ -110,9 +110,7 @@ public class Controller {
 						// Update state
 						this.state.completeId(id);
 						if (result.isSuccessful()) {
-							for (int followerId : result.getFollowerIds()) {
-								this.state.enqueueId(followerId);
-							}
+							for (int followerId : result.toQueue()) this.state.enqueueId(followerId);
 						}
 						
 						// Log status every 10k 

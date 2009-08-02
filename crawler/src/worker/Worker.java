@@ -22,6 +22,7 @@ import common.Constants;
 import common.Logger;
 import common.Result;
 import common.ResultLogger;
+import common.TweetsResult;
 
 public class Worker {
 	private String hostName;
@@ -33,6 +34,7 @@ public class Worker {
 	private long crawlCount = 0;
 	private int runningCount = 0;
 	private long beginTime;
+	private CrawlType crawlType;
 	
 	// Constants
 	private final static int MAX_CONCURRENCY = 40;
@@ -58,12 +60,13 @@ public class Worker {
 	private ResultLogger resultLog;
 	
 	// Constructor
-	public Worker(String hostName, int hostPort, String logDir, String username, String password) {
+	public Worker(String hostName, int hostPort, String logDir, String username, String password, CrawlType crawlType) {
 		this.hostName = hostName;
 		this.hostPort = hostPort;
 		this.username = username;
 		this.password = password;
 		this.logDir = logDir;
+		this.crawlType = crawlType;
 	}
 	
 	// Get the count
@@ -116,12 +119,19 @@ public class Worker {
 		if (this.sending) {
 			synchronized(this.outQueue) {
 				if (this.outQueue.size() > 0) {
+					// Write to file
+					for (Result result : this.outQueue) this.resultLog.addResult(result);
+					
+					// Write to object
 					Result[] results = new Result[this.outQueue.size()];
-					for (int i = 0; i < results.length; i++) results[i] = this.outQueue.removeFirst();
+					for (int i = 0; i < results.length; i++) {
+						Result result = this.outQueue.removeFirst();
+						results[i] = new TweetsResult(result.getId(), result.getStatus(), null, null);
+					}
 					ResultMessage rm = new ResultMessage(Constants.SECRET, results);
 					this.out.writeObject(rm);
 					this.out.flush();
-					for (Result result : results) this.resultLog.addResult(result);
+					
 					System.out.println("Sent and wrote " + results.length + ".");
 				}
 				
@@ -167,7 +177,11 @@ public class Worker {
 		synchronized(this.inQueue) {
 			if (this.inQueue.size() > 0) {
 				int nextId = this.inQueue.removeFirst();
-				Task task = new Task(nextId, this.username, this.password);
+				Task task = null;
+				switch (this.crawlType) {
+					case USER_TWEETS_AND_BIOS: task = new UserTask(nextId, this.username, this.password); break;
+					default: task = new FollowersTask(nextId, this.username, this.password); break;
+				}		
 				this.threadPool.execute(task);
 				this.tasks.add(task);
 				this.runningCount++;
@@ -212,10 +226,18 @@ public class Worker {
 	
 	// Main program
 	public static void main(String[] args) throws UnknownHostException {
-		if (args.length == 5) {
+		if (args.length == 6) {
 			while (true) {
 				try {
-					Worker w = new Worker(args[0], Integer.parseInt(args[1]), args[2], args[3], args[4]);
+					CrawlType crawlType = CrawlType.USER_TWEETS_AND_BIOS;
+					if (args[5].equals("usertweets")) {
+						crawlType = CrawlType.USER_TWEETS_AND_BIOS;
+					} else if (args[5].equals("followerids")) {
+						crawlType = CrawlType.FOLLOWER_IDS;
+					} else {
+						System.out.println("Unknown crawltype " + args[5] + ", using default crawltype 'usertweets'");
+					}
+					Worker w = new Worker(args[0], Integer.parseInt(args[1]), args[2], args[3], args[4], crawlType);
 					w.start();
 					Runtime.getRuntime().gc();
 					Thread.sleep(10000);
@@ -226,7 +248,8 @@ public class Worker {
 			}
 		} else {
 			System.out.println("Don't forget to use -XmsM and -XmxM options, where M is like 256m, 1g, etc.");
-			System.out.println("Usage: hostname port log username password");
+			System.out.println("Usage: hostname port log username password crawltype");
+			System.out.println("       where crawltype is one of usertweets, followerids");
 		}
 	}
 }

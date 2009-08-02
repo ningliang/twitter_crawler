@@ -1,6 +1,6 @@
 package aggregator;
 
-import common.Result;
+import common.FollowerResult;
 import common.Status;
 
 public class Statistics {
@@ -12,7 +12,7 @@ public class Statistics {
 	
 	private double totalFollowerCount;
 	
-	public void addResult(Result result) {
+	public void addResult(FollowerResult result) {
 		switch (result.getStatus()) {
 			case SUCCESS: successCount++; break;
 			case INVALID_ACCOUNT: invalidCount++; break;

@@ -41,7 +41,7 @@ public class ArrayState implements State {
 		
 	// Add a new id to queue
 	public void enqueueId(int id) {
-		if (!this.hasId(id) && id < state.length) {
+		if (!this.hasId(id)) {
 			this.state[id] = QUEUED;
 			this.queue.add(id);
 		}
@@ -61,14 +61,17 @@ public class ArrayState implements State {
 	public void enqueueIds(List<Integer> ids) {	for (int id : ids) this.enqueueId(id); }
 	public void rollbackIds(List<Integer> ids) { for (int id : ids) this.rollbackId(id); }
 	
-	private Boolean hasId(int id) {	return (this.state[id] != INVALID); }
+	private Boolean hasId(int id) {
+		if (id < this.state.length) return this.state[id] != INVALID;
+		else return true;
+	}
 
 	public long getCompletedCount() { return this.completedCount; }
 	public long getPendingCount() { return this.pendingCount; }
 	public long getQueuedCount() { return this.queue.size(); }
 	
 	// Direct access
-	public void setQueued(int id) { if (!hasId(id) && id < state.length) this.state[id] = QUEUED; }
+	public void setQueued(int id) { if (!hasId(id)) this.state[id] = QUEUED; }
 	public void setComplete(int id) { this.state[id] = COMPLETED; }
 	public void rebuild() {
 		// Reset the state

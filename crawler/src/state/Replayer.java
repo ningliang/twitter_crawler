@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import common.Result;
+import common.FollowerResult;
 import common.Status;
 
 
@@ -44,7 +44,7 @@ public class Replayer {
 		if (file.getName().endsWith(".txt")) {
 			System.out.println("Processing " + file.getName());
 			DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-			Result result;
+			FollowerResult result;
 			while ((result = readResult(stream)) != null) {
 				if (result.isSuccessful()) {
 					this.state.setComplete(result.getId());
@@ -58,8 +58,8 @@ public class Replayer {
 	}
 	
 	// Read in a result from a stream
-	private Result readResult(DataInputStream input) throws IOException {
-		Result result = null;
+	private FollowerResult readResult(DataInputStream input) throws IOException {
+		FollowerResult result = null;
 		try {
 			int id = input.readInt();			
 			if (id != -1) {			
@@ -67,9 +67,9 @@ public class Replayer {
 				if (status == Status.SUCCESS) {
 					int[] followerIds = new int[input.readInt()];
 					for (int i = 0; i < followerIds.length; i++) followerIds[i] = input.readInt();
-					result = new Result(id, status, followerIds);
+					result = new FollowerResult(id, status, followerIds);
 				} else {
-					result = new Result(id, status);
+					result = new FollowerResult(id, status);
 				}
 			}
 		} catch (EOFException e) { 

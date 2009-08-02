@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import common.Result;
+import common.FollowerResult;
 import common.ResultLogger;
 import common.Status;
 
@@ -19,7 +19,7 @@ public class Aggregator {
 	private ResultLogger resultLogger;
 	private String outputDir;
 	private Statistics statistics;
-	private List<Result> results = new LinkedList<Result>();
+	private List<FollowerResult> results = new LinkedList<FollowerResult>();
 	private static long PUSH_THRESHOLD = 100000;
 	private Set<Integer> recordedIds = new HashSet<Integer>();
 	
@@ -56,7 +56,7 @@ public class Aggregator {
 		if (file.getName().endsWith(".txt")) {
 			System.out.println("Processing " + file.getName());
 			DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-			Result result;
+			FollowerResult result;
 			while ((result = readResult(input)) != null) {
 				// Check the hash - add the result if we haven't seen it before
 				if (!this.recordedIds.contains(result.getId())) {
@@ -73,8 +73,8 @@ public class Aggregator {
 	public void flush() { while (results.size() > 0) this.resultLogger.addResult(results.remove(0)); }
 	
 	// Returns a result, null, or throws an exception
-	private Result readResult(DataInputStream input) throws IOException {
-		Result result = null;
+	private FollowerResult readResult(DataInputStream input) throws IOException {
+		FollowerResult result = null;
 		try {
 			int id = input.readInt();			
 			if (id != -1) {			
@@ -82,9 +82,9 @@ public class Aggregator {
 				if (status == Status.SUCCESS) {
 					int[] followerIds = new int[input.readInt()];
 					for (int i = 0; i < followerIds.length; i++) followerIds[i] = input.readInt();
-					result = new Result(id, status, followerIds);
+					result = new FollowerResult(id, status, followerIds);
 				} else {
-					result = new Result(id, status);
+					result = new FollowerResult(id, status);
 				}
 			}
 		} catch (EOFException e) { 

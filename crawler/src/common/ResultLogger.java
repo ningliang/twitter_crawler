@@ -1,34 +1,34 @@
 package common;
 
 import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.zip.GZIPOutputStream;
 
 public class ResultLogger {
 	private LinkedList<Result> queue = new LinkedList<Result>();
 	private String baseName;
-	private DataOutputStream output;
+	private ObjectOutputStream output;
 	private static final String EXTENSION = ".txt";
 	private Boolean gzip;
 	
 	// Counters and flushing parameters
 	private long loggedCount = 0;
+	private int loggedCountForSegment = 0;
 	private int segmentCount = 0;
-	private static long SEGMENT_THRESHOLD = 1000000;
-	
-	private static final int FLUSH_THRESHOLD = 100000;
+	private static long SEGMENT_THRESHOLD = 100000;
+	private static final int FLUSH_THRESHOLD = 100;
 	
 	// Constructor
 	public ResultLogger(String baseName, Boolean gzip) {
 		this.baseName = baseName;
 		this.gzip = gzip;
 		try {
-			this.output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(this.segmentName(), true)));
+			this.output = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(this.segmentName(), true)));
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -44,11 +44,15 @@ public class ResultLogger {
 	
 	private void flush() {
 		try {
-			int writeCount = this.queue.size();
-			while (this.queue.size() > 0) this.writeResult(this.queue.removeFirst());
+			int writeCount = 0;
+			while (this.queue.size() > 0) {
+				this.writeResult(this.queue.removeFirst());
+				writeCount++;
+			}
 			this.output.flush();
 			this.loggedCount += writeCount;
-			if (this.loggedCount % SEGMENT_THRESHOLD == 0 && this.loggedCount > 0) this.segment();
+			this.loggedCountForSegment += writeCount;
+			if (this.loggedCountForSegment > SEGMENT_THRESHOLD) this.segment();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -56,6 +60,8 @@ public class ResultLogger {
 	}
 	
 	private void writeResult(Result result) throws IOException {
+		this.output.writeObject(result);
+		/*
 		this.output.writeInt(result.getId());
 		this.output.writeInt(result.getStatus().toInt());
 		if (result.isSuccessful()) {
@@ -63,6 +69,7 @@ public class ResultLogger {
 			this.output.writeInt(followerIds.length);
 			for (int followerId : followerIds) this.output.writeInt(followerId);
 		}
+		*/
 	}
 	
 	private void segment() {
@@ -72,7 +79,8 @@ public class ResultLogger {
 			
 			// Increment segment count and create new segment
 			this.segmentCount += 1;
-			this.output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(this.segmentName(), true)));
+			this.loggedCountForSegment = 0;
+			this.output = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(this.segmentName(), true)));
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
