@@ -12,7 +12,7 @@ import java.util.zip.GZIPOutputStream;
 public class ResultLogger {
 	private LinkedList<Result> queue = new LinkedList<Result>();
 	private String baseName;
-	private ObjectOutputStream output;
+	private BufferedOutputStream output;
 	private static final String EXTENSION = ".txt";
 	private Boolean gzip;
 	
@@ -21,14 +21,14 @@ public class ResultLogger {
 	private int loggedCountForSegment = 0;
 	private int segmentCount = 0;
 	private static long SEGMENT_THRESHOLD = 100000;
-	private static final int FLUSH_THRESHOLD = 100;
+	private static final int FLUSH_THRESHOLD = 10;
 	
 	// Constructor
 	public ResultLogger(String baseName, Boolean gzip) {
 		this.baseName = baseName;
 		this.gzip = gzip;
 		try {
-			this.output = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(this.segmentName(), true)));
+			this.output = new BufferedOutputStream(new FileOutputStream(this.segmentName(), true));
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -60,16 +60,14 @@ public class ResultLogger {
 	}
 	
 	private void writeResult(Result result) throws IOException {
-		this.output.writeObject(result);
-		/*
-		this.output.writeInt(result.getId());
-		this.output.writeInt(result.getStatus().toInt());
-		if (result.isSuccessful()) {
-			int[] followerIds = result.getFollowerIds();
-			this.output.writeInt(followerIds.length);
-			for (int followerId : followerIds) this.output.writeInt(followerId);
+		if (result instanceof TweetsResult) {
+			TweetsResult tweetsResult = (TweetsResult)result;
+			if (tweetsResult.getBiography().id > 0) this.output.write(("B: " + tweetsResult.getBiography().toJSON().toJSONString() + "\n").getBytes());
+			if (tweetsResult.isSuccessful()) for (Tweet tweet : tweetsResult.getTweets()) this.output.write(("T: " + tweet.toJSON().toJSONString() + "\n").getBytes());
+		} else {
+			FollowerResult followerResult = (FollowerResult)result;
+			if (followerResult.isSuccessful()) this.output.write(("F: " + followerResult.toJSON().toJSONString() + "\n").getBytes());
 		}
-		*/
 	}
 	
 	private void segment() {
@@ -80,7 +78,7 @@ public class ResultLogger {
 			// Increment segment count and create new segment
 			this.segmentCount += 1;
 			this.loggedCountForSegment = 0;
-			this.output = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(this.segmentName(), true)));
+			this.output = new BufferedOutputStream(new FileOutputStream(this.segmentName(), true));
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);

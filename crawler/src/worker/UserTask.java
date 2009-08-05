@@ -1,6 +1,7 @@
 package worker;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import common.Biography;
@@ -46,21 +47,24 @@ public class UserTask extends Task {
 					this.crawled = true;
 				} else {
 					switch (code) {
-						case 400: Thread.sleep(1000); this.failCount++; break;
+						case 400: Thread.sleep(500); this.failCount++; break;
 						case 403: this.result = new TweetsResult(this.id, Status.INVALID_ACCOUNT); this.crawled = true; break;
 						case 404: this.result = new TweetsResult(this.id, Status.NOT_FOUND); this.crawled = true; break;
 						default: this.failCount++; break;
 					}
 				}
 			}
+			
+			if (biography.id == 0) {
+				twitterClient.getBiography(id, biography);
+				if (biography.id > 0) biography.crawledAt = new Date();
+			}
+			if (this.result != null) ((TweetsResult)this.result).setBiography(biography);
 		} catch (Exception e) {
 			System.out.println("Unexpected exception for " + id + " :" + e);
 		}
 		
-		if (this.result == null) {
-			this.result = new TweetsResult(id, Status.SUCCESS,  biography, tweetList.toArray(new Tweet[] {})); 
-		}
-		
+		if (this.result == null) this.result = new TweetsResult(id, Status.SUCCESS,  biography, tweetList.toArray(new Tweet[] {})); 
 		this.finished = true;
 	}	
 }

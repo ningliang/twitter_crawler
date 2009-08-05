@@ -83,10 +83,12 @@ public class TwitterClient {
 					for (int i = 0; i < array.size(); i++) {
 						parseBiography((JSONObject)((JSONObject)array.get(i)).get("user"), biography);
 						Tweet tweet = parseTweet((JSONObject)array.get(i));
+						tweet.userId = userId;
 						aggregator.add(tweet);
 					}
 				}
-			}
+				biography.crawledAt = new Date();
+			}			
 		} catch (IOException e) {
 			System.out.println("Code " + statusCode + " for " + userId + ": " + e);
 			if (statusCode == 0) e.printStackTrace();
