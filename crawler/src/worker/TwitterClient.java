@@ -143,6 +143,7 @@ public class TwitterClient {
 	
 	private void parseBiography(JSONObject json, Biography biography) {
 		biography.createdAt = parseDate(getStringFromJson(json, "created_at"));
+		biography.verified = getBooleanFromJson(json, "verified");
 		biography.description = getStringFromJson(json, "description");
 		biography.favoritesCount = getLongFromJson(json, "favourites_count");
 		biography.followersCount = getLongFromJson(json, "followers_count");
@@ -151,6 +152,9 @@ public class TwitterClient {
 		biography.id = getLongFromJson(json, "id");
 		biography.location = getStringFromJson(json, "location");
 		biography.name = getStringFromJson(json, "name");
+		biography.websiteUrl = getStringFromJson(json, "url");
+		biography.screenName = getStringFromJson(json, "screen_name");
+		biography.timeZone = getStringFromJson(json, "time_zone");
 		biography.notifications = getBooleanFromJson(json, "notifications");
 		biography.profileBackgroundColor = getStringFromJson(json, "profile_background_color");
 		biography.profileBackgroundImageUrl = getStringFromJson(json, "profile_background_image_url");
@@ -160,6 +164,7 @@ public class TwitterClient {
 		biography.profileSidebarBorderColor = getStringFromJson(json, "profile_sidebar_border_color");
 		biography.profileSidebarFillColor = getStringFromJson(json, "profile_side_fill_color");
 		biography.profileTextColor = getStringFromJson(json, "profile_text_color");
+		biography.utcOffset = getLongFromJson(json, "utc_offset");
 	}
 	
 	private Tweet parseTweet(JSONObject json) {

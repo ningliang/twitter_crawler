@@ -53,6 +53,7 @@ public class Biography implements Serializable {
 		object.put("profileTextColor", profileTextColor);
 		object.put("profileLinkColor", profileLinkColor);
 		object.put("profileSidebarFillColor", profileSidebarFillColor);
+		object.put("profileSidebarBorderColor", profileSidebarBorderColor);
 		object.put("profileBackgroundImageUrl", profileBackgroundImageUrl);
 		object.put("profileBackgroundTile", profileBackgroundTile);
 		object.put("verified", verified);
